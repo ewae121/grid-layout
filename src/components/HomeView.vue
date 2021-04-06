@@ -1,16 +1,16 @@
 <template>
   <v-main id="main" height="100%" width="100%">
-  <h1 :style="{height:titleheight+'px', width:'100%'}">Home</h1>
+  <h1 :style="{height:titleHeight+'px', width:'100%'}">Home</h1>
   <grid-layout id="gridLayout"
                :layout.sync="layout"
                :col-num="colNum"
-               :row-height="rowHeight"
+               :row-height="gridHeight"
                :is-draggable="draggable"
                :is-resizable="resizable"
                :vertical-compact="true"
                :use-css-transforms="true"
       :autoSize=false
-      :style="{height:'getDefaultRowHeight', width:'100%'}"
+      :style="{height:'gridHeight', width:'gridWith'}"
    >
      <grid-item v-for="item in layout"
                 :key=item.i
@@ -37,41 +37,45 @@ export default {
       GridLayout,
       GridItem
   },
-  mounted: function() {
-    this.rowHeight = this.getGridHeight();
+  created() {
+    window.addEventListener("resize", this.onResize);
   },
-  methods:{
+  destroyed() {
+    window.removeEventListener("resize", this.myEventHandler);
+  },
+  mounted: function() {
+    this.gridHeight = this.getGridHeight();
+  },
+  methods : {
+    onResize(/*e*/) {
+      this.gridHeight = this.getGridHeight();
+      this.gridWidth = this.getGridWidth();
+    },
     getGridHeight: function() {
-      const gridLayout = document.getElementById("main");
-      if (gridLayout) {
-        return gridLayout.offsetHeight - this.titleHeight - 20; //20 for margins
-      }
-      return 10;
-    },
-    getGridWidth: function() {
-      const gridLayout = document.getElementById("gridLayout");
-      if (gridLayout) {
-        return gridLayout.offsetWidth;
-      }
-      return 10;
-    },
-    getDefaultRowHeight: function() {
-      const main = document.getElementById("main");
-      if (main) {
-        return main.offsetHeight;
+      const mainDiv = document.getElementById("main");
+      if (mainDiv) {
+        return mainDiv.offsetHeight - this.titleHeight - 20; //20 for margins
       }
       return 1;
-    }
+    },
+    getGridWidth: function() {
+      const mainDiv = document.getElementById("main");
+      if (mainDiv) {
+        return mainDiv.offsetWidth;
+      }
+      return 1;
+    },
   },
   data: () => ({
       layout: [
-          { x: 0, y: 0, w: 1.9, h: 1, i: "0" },
+          { x: 0, y: 0, w: 1, h: 1, i: "0" },
       ],
       draggable: true,
       resizable: true,
-      colNum: 2,
+      colNum: 1,
       titleHeight:40,
-      rowHeight: 10,
+      gridHeight: 1,
+      gridWidth: 1,
       index: 0,
       maxRows: 1,
   }),
