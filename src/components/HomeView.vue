@@ -22,6 +22,7 @@
                 :h="item.h"
                 :i="item.i"
                 @move="moveEvent"
+                @moved="movedEvent"
      >
          <span class="text">{{item.i}}</span>
          <span class="remove" @click="removeItem(item.i)">x</span>
@@ -87,9 +88,13 @@ export default {
         colIdx++;
       });
     },
+    movedEvent: function(i, newX, newY){
+      console.log("MOVED i=" + i + ", X=" + newX + ", Y=" + newY);
+      this.computeNewRowHeight(i, newX, newY);
+    },
     moveEvent: function(i, newX, newY){
       console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
-      this.computeNewRowHeight(i, newX, newY);
+      //this.computeNewRowHeight(i, newX, newY);
     },
     getGridHeight: function() {
       const mainDiv = document.getElementById("main");
