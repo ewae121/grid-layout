@@ -4,6 +4,7 @@
   <grid-layout id="gridLayout"
                :layout.sync="layout"
                :col-num="colNum"
+               :max-rows="2"
                :row-height="gridHeight"
                :is-draggable="draggable"
                :is-resizable="resizable"
@@ -20,6 +21,7 @@
                 :w="item.w"
                 :h="item.h"
                 :i="item.i"
+                @move="moveEvent"
      >
          <span class="text">{{item.i}}</span>
          <span class="remove" @click="removeItem(item.i)">x</span>
@@ -45,11 +47,49 @@ export default {
   },
   mounted: function() {
     this.gridHeight = this.getGridHeight();
+
+    for (let i = 0; i < 10; ++i)
+      this.addHorItem();
   },
   methods : {
     onResize(/*e*/) {
       this.gridHeight = this.getGridHeight();
       this.gridWidth = this.getGridWidth();
+    },
+    computeNewRowHeight: function(i, newX) {
+      var colIndexes = {};
+
+      this.layout.forEach(function(item) {
+          var colIndex = item.x;
+          if (item.i == i)
+            colIndex = newX
+          if (!(colIndex.toString() in colIndexes))
+            colIndexes[colIndex.toString()] = []
+          colIndexes[colIndex].push(item.i);
+      });
+
+      this.colNum = Object.keys(colIndexes).length;
+      var self = this;
+      var colIdx = 0;
+      Object.keys(colIndexes).forEach(function(k) {
+        const col = colIndexes[k];
+        const rowCount = col.length;
+        var newHeight = 1 / rowCount;
+
+        var rowIdx = 0;
+        col.forEach(function(index){
+          self.layout[index].h = newHeight;
+          self.layout[index].w = 1;
+          self.layout[index].x = colIdx;
+          self.layout[index].y = rowIdx;
+          rowIdx++;
+        });
+        colIdx++;
+      });
+    },
+    moveEvent: function(i, newX, newY){
+      console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
+      this.computeNewRowHeight(i, newX, newY);
     },
     getGridHeight: function() {
       const mainDiv = document.getElementById("main");
@@ -65,19 +105,35 @@ export default {
       }
       return 1;
     },
+    addHorItem: function() {
+      // Add a new item. It must have a unique key!
+      this.colNum += 1;
+
+      this.index++;
+      this.layout.push({
+        x: this.nextColIdx,
+        y: 0,
+        w: 1,
+        h: 1,
+        i: this.index,
+      });
+      this.nextColIdx++;
+    }
   },
   data: () => ({
       layout: [
-          { x: 0, y: 0, w: 1, h: 1, i: "0" },
+          { x: 0, y: 0, w: 1, h: 1, i: 0 },
       ],
       draggable: true,
-      resizable: true,
+      resizable: false,
       colNum: 1,
+      maxRows: 1,
       titleHeight:40,
       gridHeight: 1,
       gridWidth: 1,
       index: 0,
-      maxRows: 1,
+      nextColIdx: 1,
+      nextRowIdx: 1,
   }),
 }
 </script>
