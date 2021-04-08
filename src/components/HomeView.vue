@@ -1,10 +1,10 @@
 <template>
   <v-main id="main" height="100%" width="100%">
-  <h1 :style="{height:titleHeight+'px', width:'100%'}">Home</h1>
+    <h1 :style="{height:titleHeight+'px', width:'100%'}">Home <span v-on:click="addHorItem()">ad</span></h1>
   <grid-layout id="gridLayout"
                :layout.sync="layout"
                :col-num="colNum"
-               :max-rows="2"
+               :max-rows="maxRows"
                :row-height="gridHeight"
                :is-draggable="draggable"
                :is-resizable="resizable"
@@ -49,15 +49,14 @@ export default {
   mounted: function() {
     this.gridHeight = this.getGridHeight();
 
-    for (let i = 0; i < 10; ++i)
-      this.addHorItem();
+    this.initMainElement();
   },
   methods : {
     onResize(/*e*/) {
       this.gridHeight = this.getGridHeight();
       this.gridWidth = this.getGridWidth();
     },
-    computeNewRowHeight: function(i, newX) {
+    _computeColIndexes: function(i, newX) {
       var colIndexes = {};
 
       this.layout.forEach(function(item) {
@@ -68,8 +67,14 @@ export default {
             colIndexes[colIndex.toString()] = []
           colIndexes[colIndex].push(item.i);
       });
+      const log = JSON.stringify(colIndexes);
+      console.log(`colIndexes = ${log}`);
+      return colIndexes;
+    },
+    computeNewRowHeight: function(i, newX) {
+      var colIndexes = this._computeColIndexes(i, newX);
 
-      this.colNum = Object.keys(colIndexes).length + 1;
+      this.colNum = Object.keys(colIndexes).length;
       var self = this;
       var colIdx = 0;
         Object.keys(colIndexes).forEach(function(k) {
@@ -93,11 +98,19 @@ export default {
       });
     },
     movedEvent: function(i, newX, newY){
+      if (this.isMoving) {
+        this.colNum -= 1
+        this.isMoving = false;
+      }
       console.log("MOVED i=" + i + ", X=" + newX + ", Y=" + newY);
       this.computeNewRowHeight(i, newX, newY);
     },
-    moveEvent: function(i, newX, newY){
-      console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
+    moveEvent: function(/*i, newX, newY*/){
+      if (!this.isMoving) {
+        this.colNum += 1;
+        this.isMoving = true;
+      }
+      //console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
       //this.computeNewRowHeight(i, newX, newY);
     },
     getGridHeight: function() {
@@ -115,32 +128,37 @@ export default {
       return 1;
     },
     addHorItem: function() {
-      // Add a new item. It must have a unique key!
       this.colNum += 1;
-
-      this.index++;
+      const newX = this.colNum - 1;
+      console.log(" newX: " + newX);
       this.layout.push({
-        x: this.nextColIdx,
+        x: newX,
         y: 0,
         w: 1,
         h: 1,
         i: this.index,
       });
-      this.nextColIdx++;
+      this.index++;
+      const log = JSON.stringify(this.layout);
+      console.log(`colIndexes = ${log}`);
+      this.computeNewRowHeight("no", -1)
+    },
+    initMainElement: function() {
+      this.addHorItem();
     }
   },
   data: () => ({
       layout: [
-          { x: 0, y: 0, w: 1, h: 1, i: 0 },
       ],
       draggable: true,
       resizable: false,
-      colNum: 1,
+      colNum: 0,
       maxRows: 1,
       titleHeight:40,
       gridHeight: 1,
       gridWidth: 1,
       index: 0,
+      isMoving: false,
       nextColIdx: 1,
       nextRowIdx: 1,
   }),
