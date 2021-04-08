@@ -69,23 +69,27 @@ export default {
           colIndexes[colIndex].push(item.i);
       });
 
-      this.colNum = Object.keys(colIndexes).length;
+      this.colNum = Object.keys(colIndexes).length + 1;
       var self = this;
       var colIdx = 0;
-      Object.keys(colIndexes).forEach(function(k) {
+        Object.keys(colIndexes).forEach(function(k) {
+
         const col = colIndexes[k];
         const rowCount = col.length;
-        var newHeight = 1 / rowCount;
+        if (rowCount != 0) {
+          var newHeight = 1 / rowCount;
+          var newWidth = 1;
 
-        var rowIdx = 0;
-        col.forEach(function(index){
-          self.layout[index].h = newHeight;
-          self.layout[index].w = 1;
-          self.layout[index].x = colIdx;
-          self.layout[index].y = rowIdx;
-          rowIdx++;
-        });
-        colIdx++;
+          var rowIdx = 0;
+          col.forEach(function(index){
+            self.layout[index].h = newHeight;
+            self.layout[index].w = newWidth;
+            self.layout[index].x = colIdx;
+            self.layout[index].y = rowIdx;
+            rowIdx++;
+          });
+          colIdx++;
+        }
       });
     },
     movedEvent: function(i, newX, newY){
