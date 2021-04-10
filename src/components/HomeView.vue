@@ -56,23 +56,41 @@ export default {
       this.gridHeight = this.getGridHeight();
       this.gridWidth = this.getGridWidth();
     },
-    _computeColIndexes: function(i, newX) {
+    _computeColIndexes: function(i, newX, newY) {
       var colIndexes = {};
 
+      var self = this;
       this.layout.forEach(function(item) {
           var colIndex = item.x;
-          if (item.i == i)
-            colIndex = newX
-          if (!(colIndex.toString() in colIndexes))
-            colIndexes[colIndex.toString()] = []
-          colIndexes[colIndex].push(item.i);
+          var rowIndex = item.y;
+          if (item.i == i) {
+            colIndex = newX;
+            rowIndex = newY;
+          }
+          const colIndexStr = colIndex.toString();
+          if (!(colIndexStr in colIndexes)) {
+            colIndexes[colIndexStr] = []
+            colIndexes[colIndex].push(item.i);
+          } else {
+            var idx = 0;
+            colIndexes[colIndexStr].forEach(function(itemIdx){
+              if (self.layout[itemIdx].y >= rowIndex) {
+                if (colIndexes[colIndex].indexOf(item.i) < 0)
+                  colIndexes[colIndex].splice(idx, 0, item.i);
+                return;
+              }
+              idx++;
+            });
+            if (colIndexes[colIndex].indexOf(item.i) < 0)
+              colIndexes[colIndex].push(item.i);
+          }
       });
       const log = JSON.stringify(colIndexes);
       console.log(`colIndexes = ${log}`);
       return colIndexes;
     },
-    computeNewRowHeight: function(i, newX) {
-      var colIndexes = this._computeColIndexes(i, newX);
+    computeNewRowHeight: function(i, newX, newY) {
+      var colIndexes = this._computeColIndexes(i, newX, newY);
 
       this.colNum = Object.keys(colIndexes).length;
       var self = this;
@@ -96,6 +114,8 @@ export default {
           colIdx++;
         }
       });
+      const log = JSON.stringify(this.layout);
+      console.log(`layout = ${log}`);
     },
     movedEvent: function(i, newX, newY){
       if (this.isMoving) {
@@ -141,7 +161,7 @@ export default {
       this.index++;
       const log = JSON.stringify(this.layout);
       console.log(`colIndexes = ${log}`);
-      this.computeNewRowHeight("no", -1)
+      this.computeNewRowHeight(this.index, newX, 0)
     },
     initMainElement: function() {
       this.addHorItem();
