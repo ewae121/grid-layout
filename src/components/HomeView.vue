@@ -56,7 +56,7 @@ export default {
       this.gridHeight = this.getGridHeight();
       this.gridWidth = this.getGridWidth();
     },
-    _computeColIndexes: function(i, newX, newY) {
+    _computeColIndexes: function(i = -1, newX = -1, newY = -1) {
       var colIndexes = {};
 
       var self = this;
@@ -89,14 +89,24 @@ export default {
       console.log(`colIndexes = ${log}`);
       return colIndexes;
     },
-    computeNewRowHeight: function(i, newX, newY) {
+    computeMovedLayout: function(i, newX, newY) {
       var colIndexes = this._computeColIndexes(i, newX, newY);
 
+      this.refresh(colIndexes);
+    },
+    computeMovingLayout: function() {
+      var colIndexes = this._computeColIndexes();
+      Object.keys(colIndexes).forEach(function(k) {
+        colIndexes[k].push("-1");
+      });
+
+      this.refresh(colIndexes);
+    },
+    refresh: function(colIndexes) {
       this.colNum = Object.keys(colIndexes).length;
       var self = this;
       var colIdx = 0;
-        Object.keys(colIndexes).forEach(function(k) {
-
+      Object.keys(colIndexes).forEach(function(k) {
         const col = colIndexes[k];
         const rowCount = col.length;
         if (rowCount != 0) {
@@ -105,10 +115,12 @@ export default {
 
           var rowIdx = 0;
           col.forEach(function(index){
-            self.layout[index].h = newHeight;
-            self.layout[index].w = newWidth;
-            self.layout[index].x = colIdx;
-            self.layout[index].y = rowIdx;
+            if (self.layout[index] != undefined) {
+              self.layout[index].h = newHeight;
+              self.layout[index].w = newWidth;
+              self.layout[index].x = colIdx;
+              self.layout[index].y = rowIdx;
+            }
             rowIdx++;
           });
           colIdx++;
@@ -119,24 +131,29 @@ export default {
     },
     movedEvent: function(i, newX, newY){
       if (this.isMoving) {
-        this.colNum -= 1
+        this.colNum -= 1;
         this.isMoving = false;
       }
       console.log("MOVED i=" + i + ", X=" + newX + ", Y=" + newY);
-      this.computeNewRowHeight(i, newX, newY);
+      this.computeMovedLayout(i, newX, newY);
     },
     moveEvent: function(/*i, newX, newY*/){
       if (!this.isMoving) {
         this.colNum += 1;
+        //this.computeMovingLayout();
         this.isMoving = true;
       }
       //console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
-      //this.computeNewRowHeight(i, newX, newY);
+      //this.computeMovedLayout(i, newX, newY);
+    },
+    removeItem: function (val) {
+      const index = this.layout.map(item => item.i).indexOf(val);
+      this.layout.splice(index, 1);
     },
     getGridHeight: function() {
       const mainDiv = document.getElementById("main");
       if (mainDiv) {
-        return mainDiv.offsetHeight - this.titleHeight - 20; //20 for margins
+        return (mainDiv.offsetHeight - this.titleHeight - 20)/2; //20 for margins
       }
       return 1;
     },
@@ -147,21 +164,25 @@ export default {
       }
       return 1;
     },
-    addHorItem: function() {
+    addHorItem: function(isTiny = false) {
       this.colNum += 1;
       const newX = this.colNum - 1;
-      console.log(" newX: " + newX);
+
+      var width = 1
+      if (isTiny)
+        width = 0.01
+
       this.layout.push({
         x: newX,
         y: 0,
-        w: 1,
+        w: width,
         h: 1,
         i: this.index,
       });
       this.index++;
       const log = JSON.stringify(this.layout);
       console.log(`colIndexes = ${log}`);
-      this.computeNewRowHeight(this.index, newX, 0)
+      this.computeMovedLayout(this.index, newX, 0)
     },
     initMainElement: function() {
       this.addHorItem();
